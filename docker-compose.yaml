@@ -3,24 +3,14 @@ version: '3'
 networks:
   default:
     external:
-      #name: ${DEFAULT_NETWORK}
       name: gitea-network
 
 volumes:
-  vol_portainer: 
-    driver: local
-  gitea-data:
-  db:
-  drone-db:
+  vol_gitea_data:
+  vol_gitea_db:
+  vol_drone_db:
 
 services:
-  portainer:                         
-    image: portainer/portainer:latest
-    ports:         
-      - 9910:9000                              
-    volumes:                                     
-      - /var/run/docker.sock:/var/run/docker.sock
-#
   gitea-server:
     image: gitea/gitea:latest
 #    networks:
@@ -28,7 +18,7 @@ services:
     ports:
       - 8380:3000
     volumes:
-      - gitea-data:/data
+      - vol_gitea_data:/data
       - ./data:/data/gitea
     restart: always
     external_links:
@@ -44,13 +34,14 @@ services:
       - 5440:5432
     restart: always
     volumes:
-      - db:/var/lib/postgresql/data
+      - vol_gitea_db:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=test
       - POSTGRES_DB=gitea
 #
   drone-server:
-    image: drone/drone:0.8.5
+    #image: drone/drone:0.8.5
+    image: drone/drone:latest
 #    networks:
 #      - gitea-network
     ports:
@@ -59,7 +50,10 @@ services:
       - 8381:8000
       - 9000:9000
     volumes:
-      - /var/lib/drone:/var/lib/drone/
+      #- vol_drone_db:/var/lib/drone/
+      #- /var/lib/drone:/var/lib/drone/
+      - ./data:/var/lib/drone/
+      #- vol_drone_db:/data
     restart: always
     environment:
       - DRONE_OPEN=true
@@ -83,7 +77,8 @@ services:
       - DRONE_NETWORK=gitea-network
 #
   drone-agent:
-    image: drone/agent:0.8.5
+    #image: drone/agent:0.8.5
+    image: drone/agent:latest
 #    networks:
 #      - gitea-network
     command: agent
